@@ -65,3 +65,16 @@ label{color:#7a827d}
 .app-footer{color:#7c847f}
 .modal{background:rgba(39,48,45,.32)}.modal>div{background:#fbfaf6;border-color:#cfd2ca}.modal h2{color:#303936}.modal p{color:#737a75}.modal input{background:#f4f3ee;border-color:#d2d4cd;color:#303936}.close{color:#737b76}
 .analysis-error{color:#9b5f5f}
+
+/* real reference previews */
+.ref-art{position:relative;overflow:hidden;min-height:190px;background:#eef0eb}
+.ref-art iframe{position:absolute;inset:0;width:200%;height:200%;border:0;transform:scale(.5);transform-origin:top left;background:#fff}
+.ref-art-overlay{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:space-between;padding:10px;pointer-events:none;background:linear-gradient(180deg,transparent 55%,rgba(39,48,45,.28))}
+.ref-art-overlay span{font-size:9px;letter-spacing:.12em;background:rgba(251,250,246,.9);border:1px solid rgba(255,255,255,.65);padding:5px 7px;color:#53605a}
+.ref-art-overlay b{font-size:34px;color:rgba(255,255,255,.9);line-height:1}
+.study-screen{position:relative;overflow:hidden;min-height:420px}
+.study-screen iframe{position:absolute;inset:0;width:200%;height:200%;border:0;transform:scale(.5);transform-origin:top left;background:#fff}
+.study-screen-label{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:space-between;padding:18px;pointer-events:none;background:linear-gradient(180deg,transparent 55%,rgba(39,48,45,.24))}
+.study-screen-label strong{font-size:52px;color:rgba(255,255,255,.92)}
+.study-screen-label span{font-size:10px;letter-spacing:.14em;color:#fff;background:rgba(39,48,45,.55);padding:6px 8px}
+.ref-art iframe,.study-screen iframe{pointer-events:none}
