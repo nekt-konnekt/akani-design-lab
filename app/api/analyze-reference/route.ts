@@ -34,6 +34,10 @@ export async function POST(request: Request) {
     const title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || parsed.hostname)
       .replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").trim().slice(0, 120);
 
+    const ogImageRaw = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] || html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i)?.[1] || "";
+    let ogImage = "";
+    try { ogImage = ogImageRaw ? new URL(ogImageRaw, response.url || url).toString() : ""; } catch {}
+
     const headings = extract(html, /<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/gi)
       .map(x => x.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
 
@@ -71,6 +75,7 @@ export async function POST(request: Request) {
       fonts: fonts.slice(0, 8),
       colors: colors.slice(0, 12),
       stats: { scripts, stylesheets, images, sections, textLength: text.length },
+      ogImage,
       scores,
       dna,
       analyzedAt: new Date().toISOString(),
