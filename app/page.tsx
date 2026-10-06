@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, Brain, Check, ChevronRight, ExternalLink, FileText, Layers3, Plus, Search, Sparkles, Wand2, X } from "lucide-react";
 
 type Ref = { title:string; url:string; category:string; kind:string; dna:string[]; note:string };
@@ -62,7 +62,18 @@ export default function Home(){
   const [query,setQuery]=useState("");
   const [add,setAdd]=useState(false);
   const [url,setUrl]=useState("");
-  const [project,setProject]=useState("IYALI");
+  const [project,setProject]=useState("");
+
+  useEffect(function(){
+    try{ setProject(localStorage.getItem("akani-active-project") || ""); }catch{}
+  },[]);
+
+  useEffect(function(){
+    try{
+      if(project.trim()) localStorage.setItem("akani-active-project",project.trim());
+      else localStorage.removeItem("akani-active-project");
+    }catch{}
+  },[project]);
   const [done,setDone]=useState(false);
   const [analysis,setAnalysis]=useState<any>(null);
   const [analyzing,setAnalyzing]=useState(false);
@@ -117,13 +128,13 @@ export default function Home(){
       <div className="brand"><span>A</span><div>AKANI<strong>DESIGN LAB</strong></div></div>
       <div className="workspace-label">DESIGN INTELLIGENCE</div>
       <nav className="side-nav">{nav.map(function(item){return <button key={item} className={active===item?"on":""} onClick={function(){setActive(item)}}><span>{item==="Command Center"?"⌂":item==="Explore"?"◫":item==="Study"?"◎":item==="Remix"?"◇":item==="Build"?"▱":item==="Critique"?"◈":"≡"}</span>{item}<ChevronRight size={13}/></button>})}</nav>
-      <div className="sidebar-bottom"><div className="memory-meter"><span>DESIGN MEMORY</span><b>{refs.length} references</b><i><em/></i></div><button className="project-chip" onClick={function(){setActive("Memory")}}><span>{project.slice(0,1)}</span><div><small>ACTIVE PROJECT</small>{project}</div></button></div>
+      <div className="sidebar-bottom"><div className="memory-meter"><span>DESIGN MEMORY</span><b>{refs.length} references</b><i><em/></i></div><button className="project-chip" onClick={function(){setActive("Command Center")}}><span>{project ? project.slice(0,1).toUpperCase() : "A"}</span><div><small>ACTIVE PROJECT</small>{project || "No project selected"}</div></button></div>
     </aside>
 
     <div className="workspace">
       <header className="topbar"><div><span className="crumb">AKANI /</span> {active.toUpperCase()}</div><div className="top-actions"><button onClick={function(){setAdd(true)}}><Plus size={14}/> Add reference</button><span className="status-dot"/>LOCAL WORKSPACE</div></header>
 
-      {active==="Command Center" && <><section className="command-hero"><div><label>DESIGN INTELLIGENCE / 00</label><h1>What are you <i>designing?</i></h1><p>AKANI studies great design, extracts the principles behind it, and transfers those lessons into an original design language for your product.</p><div className="project-input"><span>PROJECT</span><input value={project} onChange={function(e){setProject(e.target.value)}}/><button onClick={function(){setActive("Study")}}>Start studying <ArrowUpRight size={15}/></button></div></div><div className="intelligence-map"><div className="map-core"><Brain size={24}/><small>AKANI<br/>INTELLIGENCE</small></div><div className="map-node n1">REFERENCE</div><div className="map-node n2">DECONSTRUCT</div><div className="map-node n3">SYNTHESIZE</div><div className="map-node n4">BUILD</div><div className="map-node n5">CRITIQUE</div></div></section>
+      {active==="Command Center" && <><section className="command-hero"><div><label>DESIGN INTELLIGENCE / 00</label><h1>What are you <i>designing?</i></h1><p>AKANI studies great design, extracts the principles behind it, and transfers those lessons into an original design language for your product.</p><div className="project-input"><span>PROJECT</span><input value={project} onChange={function(e){setProject(e.target.value)}} placeholder="Enter a product or project"/><button onClick={function(){setActive("Study")}}>Start studying <ArrowUpRight size={15}/></button></div></div><div className="intelligence-map"><div className="map-core"><Brain size={24}/><small>AKANI<br/>INTELLIGENCE</small></div><div className="map-node n1">REFERENCE</div><div className="map-node n2">DECONSTRUCT</div><div className="map-node n3">SYNTHESIZE</div><div className="map-node n4">BUILD</div><div className="map-node n5">CRITIQUE</div></div></section>
       <section className="loop"><div className="section-title"><label>THE LOOP</label><h2>Reference → skill.</h2><p>Not reference → clone.</p></div><div className="loop-grid">{[["01","REFERENCE","Find work worth studying."],["02","DECONSTRUCT","Understand why it works."],["03","SYNTHESIZE","Remix principles across references."],["04","BUILD","Turn the language into instructions."],["05","CRITIQUE","Test the result against the intent."]].map(function(x){return <article key={x[0]}><small>{x[0]}</small><Sparkles size={17}/><h3>{x[1]}</h3><p>{x[2]}</p></article>})}</div></section>
       <section className="project-panel"><div className="section-title"><label>YOUR WORKSPACE</label><h2>{project||"Untitled project"}</h2></div><div className="workspace-grid">{[["01","Explore references","Your visual memory","Explore"],["02","Study a reference","Extract design DNA","Study"],["03","Remix a direction","Combine 2–5 references","Remix"],["04","Generate DESIGN.md","Give your agent design memory","Build"]].map(function(x){return <button key={x[0]} onClick={function(){setActive(x[3])}}><span>{x[0]}</span><b>{x[1]}</b><small>{x[2]}</small><ArrowUpRight/></button>})}</div></section></>}
 
