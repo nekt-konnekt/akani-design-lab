@@ -31,10 +31,10 @@ export async function POST(request: Request) {
     }
 
     const html = (await response.text()).slice(0, 900000);
-    const title = (html.match(/<title[^>]*>([\s\\S]*?)<\/title>/i)?.[1] || parsed.hostname)
+    const title = (html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || parsed.hostname)
       .replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").trim().slice(0, 120);
 
-    const headings = extract(html, /<h[1-3][^>]*>([\s\\S]*?)<\/h[1-3]>/gi)
+    const headings = extract(html, /<h[1-3][^>]*>([\s\S]*?)<\/h[1-3]>/gi)
       .map(x => x.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
 
     const fonts = uniq([
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const stylesheets = (html.match(/<link[^>]+rel=["']stylesheet["']/gi) || []).length;
     const images = (html.match(/<img\b/gi) || []).length;
     const sections = (html.match(/<section\b/gi) || []).length;
-    const text = html.replace(/<script[\s\\S]*?<\/script>/gi, " ").replace(/<style[\s\\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const text = html.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
     const dna = [
       headings.length ? `Strong heading hierarchy (${headings.length} detected)` : "Light heading structure",
