@@ -106,8 +106,10 @@ export default function Home(){
     try{
       const response=await fetch("/api/capture-reference",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:selected.url})});
       if(!response.ok) throw new Error((await response.json()).error||"Capture failed");
-      const blob=await response.blob();
-      setCapture(URL.createObjectURL(blob));
+      const data=await response.json();
+      if(!data.url) throw new Error("Capture returned no image URL.");
+      setCapture(data.url);
+      try{ localStorage.setItem("akani-reference-capture:"+selected.id, JSON.stringify(data)); }catch{}
     }catch(error){
       setAnalysisError(error instanceof Error ? error.message : "Capture failed");
     }finally{setCapturing(false);}
