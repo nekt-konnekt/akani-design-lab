@@ -97,14 +97,14 @@ export default function Home(){
       const savedAnalysis=localStorage.getItem("akani-reference-analyses");
       const allAnalysis=savedAnalysis?JSON.parse(savedAnalysis):{};
       setAnalysis(allAnalysis[selected.url] || null);
-      const savedCapture=localStorage.getItem("akani-reference-capture:"+selected.id);
+      const savedCapture=localStorage.getItem("akani-reference-capture:"+selected.url);
       const captureData=savedCapture?JSON.parse(savedCapture):null;
       setCapture(captureData?.url || "");
     }catch{
       setAnalysis(null);
       setCapture("");
     }
-  },[selected.id,selected.url]);
+  },[selected.url,selected.url]);
   const [synthesized,setSynthesized]=useState<string[]>([]);
   const [synthesisDone,setSynthesisDone]=useState(false);
   const [critiqueUrl,setCritiqueUrl]=useState("");
@@ -123,7 +123,7 @@ export default function Home(){
       const data=await response.json();
       if(!data.url) throw new Error("Capture returned no image URL.");
       setCapture(data.url);
-      try{ localStorage.setItem("akani-reference-capture:"+selected.id, JSON.stringify(data)); }catch{}
+      try{ localStorage.setItem("akani-reference-capture:"+selected.url, JSON.stringify(data)); }catch{}
     }catch(error){
       setAnalysisError(error instanceof Error ? error.message : "Capture failed");
     }finally{setCapturing(false);}
