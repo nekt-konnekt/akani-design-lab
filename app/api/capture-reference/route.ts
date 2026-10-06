@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Buffer } from "node:buffer";
 import chromium from "@sparticuz/chromium";
 import { chromium as playwright } from "playwright-core";
 import { put } from "@vercel/blob";
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
 
     const screenshot = await page.screenshot({ type: "jpeg", quality: 78, fullPage: true });
     const title = await page.title().catch(() => parsed.hostname);
-    const blob = await put(`references/${encodeURIComponent(parsed.hostname)}-${Date.now()}.jpg`, new Uint8Array(screenshot), {
+    const blob = await put(`references/${encodeURIComponent(parsed.hostname)}-${Date.now()}.jpg`, Buffer.from(screenshot), {
       access: "public",
       contentType: "image/jpeg",
       addRandomSuffix: true,
@@ -44,13 +45,6 @@ export async function POST(request: Request) {
       viewport: { width: 1440, height: 900 },
     });
 
-    /* return new Response(new Uint8Array(screenshot), {
-      headers: {
-        "Content-Type": "image/jpeg",
-        "Cache-Control": "public, max-age=3600",
-        "X-Akani-Reference-Title": title.slice(0, 120),
-      },
-    }); */
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to capture reference.";
     return NextResponse.json({ error: message }, { status: 502 });
