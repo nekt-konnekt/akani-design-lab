@@ -70,7 +70,7 @@ export default function Home(){
   function saveReference(){
     if(!url.trim()) return;
     const u=url.startsWith("http")?url:"https://"+url;
-    const title=u.replace(/^https?:\\/\\//,"").split("/")[0].replace("www.","");
+    const title=u.split("//")[1].split("/")[0].replace("www.","");
     const item:Ref={title:title,url:u,category:"Visual",kind:"Web",dna:["New reference","Needs study","Unclassified"],note:"Saved to your design memory. Study it to extract transferable principles."};
     setRefs(function(x){return [item,...x]}); setSelected(item); setUrl(""); setAdd(false); setActive("Study");
   }
