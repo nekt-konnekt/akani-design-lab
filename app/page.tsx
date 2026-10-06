@@ -104,7 +104,7 @@ export default function Home(){
       setAnalysis(null);
       setCapture("");
     }
-  },[selected.url,selected.url]);
+  },[selected.url]);
   const [synthesized,setSynthesized]=useState<string[]>([]);
   const [synthesisDone,setSynthesisDone]=useState(false);
   const [critiqueUrl,setCritiqueUrl]=useState("");
