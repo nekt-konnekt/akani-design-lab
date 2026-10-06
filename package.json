@@ -13,7 +13,8 @@
     "react-dom": "19.2.0",
     "lucide-react": "^0.468.0",
     "@sparticuz/chromium": "^143.0.0",
-    "playwright-core": "^1.57.0"
+    "playwright-core": "^1.57.0",
+    "@vercel/blob": "^2.0.0"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
