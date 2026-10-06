@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const screenshot = await page.screenshot({ type: "jpeg", quality: 78, fullPage: true });
     const title = await page.title().catch(() => parsed.hostname);
 
-    return new NextResponse(screenshot, {
+    return new Response(new Uint8Array(screenshot), {
       headers: {
         "Content-Type": "image/jpeg",
         "Cache-Control": "public, max-age=3600",
