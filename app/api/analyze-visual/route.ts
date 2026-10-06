@@ -1,19 +1,9 @@
 import { NextResponse } from "next/server";
+import { analyzeWithOllama } from "@/lib/ai/ollama";
+import { analyzeWithQwen } from "@/lib/ai/qwen";
+import type { AIProvider, VisualDNA } from "@/lib/ai/types";
 
 export const maxDuration = 60;
-
-type VisualDNA = {
-  composition: string;
-  hierarchy: string;
-  spacing: string;
-  typography: string;
-  color: string;
-  layout: string;
-  components: string;
-  imagery: string;
-  distinctive: string;
-  transfer: string[];
-};
 
 function fallbackVisual(stats: any, title: string): VisualDNA {
   const density = Number(stats?.textLength || 0) > 7000 ? "information-rich" : Number(stats?.textLength || 0) > 2500 ? "balanced" : "restrained";
@@ -31,46 +21,72 @@ function fallbackVisual(stats: any, title: string): VisualDNA {
   };
 }
 
+function providerOrder(requested: AIProvider): AIProvider[] {
+  if (requested === "ollama") return ["ollama"];
+  if (requested === "qwen") return ["qwen"];
+  if (requested === "gemini") return ["gemini"];
+  const order: AIProvider[] = [];
+  if (process.env.OLLAMA_BASE_URL) order.push("ollama");
+  if (process.env.QWEN_API_KEY || process.env.DASHSCOPE_API_KEY) order.push("qwen");
+  if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY) order.push("gemini");
+  return order;
+}
+
+async function analyzeWithGemini(imageUrl: string, title: string, structural: any) {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  if (!apiKey) throw new Error("Gemini is not configured.");
+  const imageResponse = await fetch(imageUrl, { signal: AbortSignal.timeout(20000) });
+  if (!imageResponse.ok) throw new Error(`Unable to read captured image (${imageResponse.status}).`);
+  const mime = imageResponse.headers.get("content-type") || "image/jpeg";
+  const base64 = Buffer.from(await imageResponse.arrayBuffer()).toString("base64");
+  const prompt = `You are AKANI Design Lab, a visual design intelligence engine. Analyze this captured website screenshot as a design artifact, not as a site to copy. Return ONLY valid JSON with exactly these keys: composition, hierarchy, spacing, typography, color, layout, components, imagery, distinctive, transfer. transfer must be an array of 4-6 concrete transferable design principles. Be specific about proportion, rhythm, hierarchy, typography, color roles, component grammar and intent. Reference title: ${title}. Structural signals: ${JSON.stringify(structural).slice(0, 12000)}`;
+  const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + encodeURIComponent(apiKey), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }, { inline_data: { mime_type: mime, data: base64 } }] }], generationConfig: { temperature: 0.2, responseMimeType: "application/json" } }),
+    signal: AbortSignal.timeout(50000),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data?.error?.message || "Gemini visual analysis failed.");
+  const text = data?.candidates?.[0]?.content?.parts?.find((part: any) => part.text)?.text;
+  if (!text) throw new Error("Gemini returned no visual analysis.");
+  return { visual: JSON.parse(text) as VisualDNA, model: "gemini-2.5-flash" };
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const imageUrl = String(body?.imageUrl || "").trim();
     const title = String(body?.title || "Reference").trim();
     const structural = body?.structural || {};
+    const requested = (String(body?.provider || process.env.AI_PROVIDER || "auto").toLowerCase()) as AIProvider;
     if (!imageUrl) return NextResponse.json({ error: "A captured reference image URL is required." }, { status: 400 });
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-    if (!apiKey) {
+    const providers = providerOrder(requested);
+    if (!providers.length) {
       return NextResponse.json({
-        error: "Visual analysis needs a Gemini API key. Add GEMINI_API_KEY to the Vercel project environment, then run the visual analysis again.",
+        error: "No visual AI provider is configured. For zero service cost, run Ollama locally and set OLLAMA_BASE_URL. For hosted use, configure QWEN_API_KEY and QWEN_BASE_URL.",
         fallback: fallbackVisual(structural.stats, title),
         configured: false,
       }, { status: 503 });
     }
 
-    const imageResponse = await fetch(imageUrl, { signal: AbortSignal.timeout(20000) });
-    if (!imageResponse.ok) throw new Error(`Unable to read captured image (${imageResponse.status}).`);
-    const mime = imageResponse.headers.get("content-type") || "image/jpeg";
-    const bytes = new Uint8Array(await imageResponse.arrayBuffer());
-    const base64 = Buffer.from(bytes).toString("base64");
+    const errors: string[] = [];
+    for (const provider of providers) {
+      try {
+        const result = provider === "ollama"
+          ? await analyzeWithOllama({ imageUrl, title, structural })
+          : provider === "qwen"
+            ? await analyzeWithQwen({ imageUrl, title, structural })
+            : await analyzeWithGemini(imageUrl, title, structural);
+        return NextResponse.json({ visual: result.visual, analyzedAt: new Date().toISOString(), configured: true, provider, model: result.model });
+      } catch (error) {
+        errors.push(`${provider}: ${error instanceof Error ? error.message : "failed"}`);
+        if (requested !== "auto") break;
+      }
+    }
 
-    const prompt = `You are AKANI Design Lab, a visual design intelligence engine. Analyze this captured website screenshot as a design artifact, not as a site to copy. Return ONLY valid JSON matching this exact shape: {"composition":"...","hierarchy":"...","spacing":"...","typography":"...","color":"...","layout":"...","components":"...","imagery":"...","distinctive":"...","transfer":["...","...","..."]}. Be concrete and visual. Explain relationships, rhythm, proportion, hierarchy, treatment and intent. Avoid generic praise. The goal is to extract transferable design principles for a different product. The reference title is ${title}. Structural signals from the HTML are: ${JSON.stringify(structural).slice(0, 12000)}`;
-
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + encodeURIComponent(apiKey), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }, { inline_data: { mime_type: mime, data: base64 } }] }],
-        generationConfig: { temperature: 0.2, responseMimeType: "application/json" }
-      }),
-      signal: AbortSignal.timeout(50000),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data?.error?.message || "Gemini visual analysis failed.");
-    const text = data?.candidates?.[0]?.content?.parts?.find((part: any) => part.text)?.text;
-    if (!text) throw new Error("Gemini returned no visual analysis.");
-    const visual = JSON.parse(text) as VisualDNA;
-    return NextResponse.json({ visual, analyzedAt: new Date().toISOString(), configured: true, model: "gemini-2.5-flash" });
+    return NextResponse.json({ error: errors.join(" | ") || "Visual analysis failed.", configured: false, fallback: fallbackVisual(structural.stats, title) }, { status: 502 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Visual analysis failed.";
     return NextResponse.json({ error: message }, { status: 502 });
