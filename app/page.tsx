@@ -91,6 +91,20 @@ export default function Home(){
       if(states) setStudied(JSON.parse(states));
     }catch{}
   },[]);
+
+  useEffect(function(){
+    try{
+      const savedAnalysis=localStorage.getItem("akani-reference-analyses");
+      const allAnalysis=savedAnalysis?JSON.parse(savedAnalysis):{};
+      setAnalysis(allAnalysis[selected.url] || null);
+      const savedCapture=localStorage.getItem("akani-reference-capture:"+selected.id);
+      const captureData=savedCapture?JSON.parse(savedCapture):null;
+      setCapture(captureData?.url || "");
+    }catch{
+      setAnalysis(null);
+      setCapture("");
+    }
+  },[selected.id,selected.url]);
   const [synthesized,setSynthesized]=useState<string[]>([]);
   const [synthesisDone,setSynthesisDone]=useState(false);
   const [critiqueUrl,setCritiqueUrl]=useState("");
