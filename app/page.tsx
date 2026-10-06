@@ -1,0 +1,26 @@
+"use client";
+import {useMemo,useState} from "react";
+import {ArrowUpRight,Brain,ChevronRight,ExternalLink,Plus,Search,Sparkles,X} from "lucide-react";
+type Ref={title:string;url:string;category:string;dna:string[];note:string};
+const seed:Ref[]=[
+{title:"Awwwards",url:"https://www.awwwards.com",category:"Visual",dna:["Editorial","Art-directed","Motion"],note:"Award-winning web experiences and strong visual direction."},
+{title:"Godly",url:"https://godly.website",category:"Visual",dna:["Minimal","Product","Distinctive"],note:"Hand-picked modern websites with strong product presentation."},
+{title:"Refero",url:"https://styles.refero.design",category:"Systems",dna:["Typography","Spacing","Product UI"],note:"Real product patterns organized around design decisions."},
+{title:"Component Gallery",url:"https://component.gallery",category:"Components",dna:["Patterns","Systems","Consistency"],note:"Compare how mature design systems solve the same component."},
+{title:"Motion Primitives",url:"https://motion-primitives.com",category:"Motion",dna:["Interaction","Transition","React"],note:"Advanced interaction patterns that can become product behavior."},
+{title:"shadcn/ui",url:"https://ui.shadcn.com",category:"Build",dna:["Composable","Accessible","Code"],note:"A strong implementation foundation rather than a visual identity."}];
+const cats=["All","Visual","Components","Motion","Systems","Build"];
+export default function Home(){
+ const[refs,setRefs]=useState(seed),[sel,setSel]=useState(seed[0]),[cat,setCat]=useState("All"),[q,setQ]=useState(""),[add,setAdd]=useState(false),[url,setUrl]=useState("");
+ const filtered=useMemo(()=>refs.filter(r=>(cat==="All"||r.category===cat)&&r.title.toLowerCase().includes(q.toLowerCase())),[refs,cat,q]);
+ function save(){if(!url.trim())return;const u=url.startsWith("http")?url:"https://"+url;const title=u.replace(/^https?:\/\//,"").split("/")[0].replace("www.","");const r:Ref={title,url:u,category:"Visual",dna:["New reference","To deconstruct","Unclassified"],note:"Saved reference. The analysis engine will turn this into design DNA."};setRefs(x=>[r,...x]);setSel(r);setUrl("");setAdd(false)}
+ return <main>
+ <header><div className="brand"><span>A</span> AKANI <b>DESIGN LAB</b></div><button onClick={()=>setAdd(true)}><Plus size={15}/> Add reference</button></header>
+ <section className="hero"><div><label>REFERENCE → SKILL</label><h1>Stop copying websites.<br/><i>Start extracting</i> why they work.</h1><p>Turn great visual references into design decisions, reusable systems and build-ready instructions for AI coding agents.</p><button className="primary" onClick={()=>setAdd(true)}>Analyze a reference <ArrowUpRight size={16}/></button></div><div className="visual"><div className="orbit"/><div className="core"><Brain/><small>DESIGN<br/>INTELLIGENCE</small></div><em>REFERENCE</em><em>DECONSTRUCT</em><em>SYNTHESIZE</em></div></section>
+ <section><div className="head"><div><label>01 / REFERENCE LIBRARY</label><h2>Build your visual memory.</h2></div><div className="search"><Search size={15}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search references"/></div></div><nav>{cats.map(c=><button className={cat===c?"active":""} onClick={()=>setCat(c)} key={c}>{c}</button>)}</nav><div className="grid">{filtered.map((r,i)=><article className={sel.title===r.title?"selected":""} onClick={()=>setSel(r)} key={r.title+i}><small>0{(i%9)+1}</small><a href={r.url} target="_blank" onClick={e=>e.stopPropagation()}><ExternalLink size={14}/></a><h3>{r.title}</h3><p>{r.note}</p><div>{r.dna.map(x=><span key={x}>{x}</span>)}</div><footer>{r.category}<ChevronRight size={14}/></footer></article>)}</div></section>
+ <section className="deconstruct"><label>02 / DECONSTRUCT</label><h2>{sel.title}<small> / design DNA</small></h2><div className="dna"><div><label>CURRENT READ</label><h3>{sel.note}</h3><div className="scores"><b>09<small>distinctiveness</small></b><b>08<small>hierarchy</small></b><b>08<small>system quality</small></b><b>07<small>motion</small></b></div></div><div><label>DESIGN DNA</label>{sel.dna.map((x,i)=><p key={x}><small>0{i+1}</small><b>{x}</b><ArrowUpRight size={13}/></p>)}</div></div></section>
+ <section><label>03 / THE METHOD</label><h2>Reference → skill, not reference → clone.</h2><div className="steps">{[["01","REFERENCE","Find something worth studying."],["02","DECONSTRUCT","Extract typography, layout, motion, hierarchy and interaction."],["03","SYNTHESIZE","Combine lessons from different worlds into a new design language."],["04","BUILD","Generate DESIGN.md and build-ready instructions for your agent."]].map(x=><article key={x[0]}><small>{x[0]}</small><h3>{x[1]}</h3><p>{x[2]}</p></article>)}</div></section>
+ <footer className="bottom">AKANI DESIGN LAB <span>Reference intelligence for the AI design era.</span></footer>
+ {add&&<div className="modal"><div><button className="close" onClick={()=>setAdd(false)}><X/></button><label>ADD REFERENCE</label><h2>What should we study?</h2><p>Paste a website URL. V1 saves it; the analysis engine comes next.</p><input autoFocus value={url} onChange={e=>setUrl(e.target.value)} onKeyDown={e=>e.key==="Enter"&&save()} placeholder="https://example.com"/><button className="primary full" onClick={save}>Save reference <ArrowUpRight size={15}/></button></div></div>}
+ </main>
+}
