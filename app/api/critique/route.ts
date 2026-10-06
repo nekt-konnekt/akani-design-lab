@@ -4,17 +4,17 @@ function clamp(n:number,min:number,max:number){return Math.max(min,Math.min(max,
 function unique(values:string[]){return [...new Set(values.filter(Boolean))];}
 
 function extract(html:string){
-  const text=html.replace(/<script[\\s\\S]*?<\\/script>/gi," ").replace(/<style[\\s\\S]*?<\\/style>/gi," ").replace(/<[^>]+>/g," ").replace(/\\s+/g," ").trim();
-  const headings=[...html.matchAll(/<h[1-3]\\b[^>]*>([\\s\\S]*?)<\\/h[1-3]>/gi)].map(m=>m[1].replace(/<[^>]+>/g," ").replace(/\\s+/g," ").trim()).filter(Boolean).slice(0,20);
-  const fonts=unique([...html.matchAll(/font-family\\s*:\\s*([^;}]+)/gi)].map(m=>m[1].trim().replace(/['"]/g,"")).filter(Boolean)).slice(0,10);
-  const colors=unique([...html.matchAll(/#[0-9a-fA-F]{3,8}\\b/g)].map(m=>m[0].toLowerCase())).slice(0,20);
-  const buttons=(html.match(/<button\\b/gi)||[]).length+(html.match(/role=["']button["']/gi)||[]).length;
-  const links=(html.match(/<a\\b/gi)||[]).length;
-  const images=(html.match(/<img\\b/gi)||[]).length;
-  const sections=(html.match(/<section\\b/gi)||[]).length;
+  const text=html.replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<style[\s\S]*?<\/style>/gi," ").replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();
+  const headings=[...html.matchAll(/<h[1-3]\b[^>]*>([\s\S]*?)<\/h[1-3]>/gi)].map(m=>m[1].replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim()).filter(Boolean).slice(0,20);
+  const fonts=unique([...html.matchAll(/font-family\s*:\s*([^;}]+)/gi)].map(m=>m[1].trim().replace(/['"]/g,"")).filter(Boolean)).slice(0,10);
+  const colors=unique([...html.matchAll(/#[0-9a-fA-F]{3,8}\b/g)].map(m=>m[0].toLowerCase())).slice(0,20);
+  const buttons=(html.match(/<button\b/gi)||[]).length+(html.match(/role=["']button["']/gi)||[]).length;
+  const links=(html.match(/<a\b/gi)||[]).length;
+  const images=(html.match(/<img\b/gi)||[]).length;
+  const sections=(html.match(/<section\b/gi)||[]).length;
   const cards=(html.match(/card|rounded-|border-radius|shadow-/gi)||[]).length;
   const gradients=(html.match(/gradient/gi)||[]).length;
-  const scripts=(html.match(/<script\\b/gi)||[]).length;
+  const scripts=(html.match(/<script\b/gi)||[]).length;
   const stylesheets=(html.match(/<link[^>]+stylesheet/gi)||[]).length;
   return {textLength:text.length,headings,fonts,colors,buttons,links,images,sections,cards,gradients,scripts,stylesheets};
 }
@@ -41,7 +41,7 @@ export async function POST(request:Request){
     if(!response.ok) return NextResponse.json({error:"The site returned HTTP "+response.status+"."},{status:502});
     const html=await response.text();
     const e=extract(html);
-    const h1Count=(html.match(/<h1\\b/gi)||[]).length;
+    const h1Count=(html.match(/<h1\b/gi)||[]).length;
     const hierarchyBase=e.headings.length?Math.min(10,5+(h1Count===1?2:0)+(e.headings.length>=3?2:0)+(e.headings.length>=6?1:0)):3;
     const typography=clamp(5+(e.fonts.length?2:0)+(e.headings.length>=3?1:0)+(e.textLength>500?1:0)-(e.fonts.length>5?1:0),1,10);
     const distinctiveness=clamp(7+(e.colors.length>=4?1:0)+(e.gradients===0?1:0)-(e.cards>12?2:0),1,10);
@@ -69,7 +69,7 @@ export async function POST(request:Request){
       url:target,project,score,
       scores:{distinctiveness,hierarchy:hierarchyBase,typography,spacing,productIdentity},
       findings:{strengths,warnings,recommendations},
-      extraction:{title:(html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i)?.[1]||"").replace(/<[^>]+>/g," ").trim(),headings:e.headings,fonts:e.fonts,colors:e.colors,stats:{headings:e.headings.length,h1:h1Count,images:e.images,sections:e.sections,buttons:e.buttons,links:e.links,cards:e.cards,gradients:e.gradients,scripts:e.scripts,stylesheets:e.stylesheets,textLength:e.textLength}},
+      extraction:{title:(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]||"").replace(/<[^>]+>/g," ").trim(),headings:e.headings,fonts:e.fonts,colors:e.colors,stats:{headings:e.headings.length,h1:h1Count,images:e.images,sections:e.sections,buttons:e.buttons,links:e.links,cards:e.cards,gradients:e.gradients,scripts:e.scripts,stylesheets:e.stylesheets,textLength:e.textLength}},
       designLanguage,
       analyzedAt:new Date().toISOString()
     });
